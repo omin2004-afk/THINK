@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>즐거운 교실 - 나의 생각 나누기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nanum+Gothic', sans-serif;
+            background-color: #f0f4f1; /* 연한 배경 */
+            background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .classroom-font {
+            font-family: 'Gaegu', cursive;
+        }
+        .chalkboard {
+            background-color: #2d5a27; /* 칠판 색상 */
+            border: 12px solid #5d4037; /* 나무 프레임 */
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .input-field {
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            border-color: #ffd54f;
+            outline: none;
+            box-shadow: 0 0 10px rgba(255, 213, 79, 0.5);
+        }
+        .btn-submit {
+            background-color: #5d4037;
+            color: white;
+            transition: transform 0.1s active;
+        }
+        .btn-submit:hover {
+            background-color: #4e342e;
+            transform: translateY(-2px);
+        }
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+        /* 알림창 스타일 */
+        #statusMessage {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            z-index: 1000;
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="statusMessage" class="shadow-lg"></div>
+
+    <div class="max-w-md w-full">
+        <!-- 상단 헤더 (교실 게시판 느낌) -->
+        <div class="text-center mb-6">
+            <h1 class="classroom-font text-4xl text-[#5d4037] font-bold">우리 반 생각 함</h1>
+            <p class="text-gray-600 mt-2">여러분의 소중한 의견을 들려주세요!</p>
+        </div>
+
+        <!-- 메인 폼 (칠판) -->
+        <div class="chalkboard rounded-xl p-8 text-white">
+            <form id="studentForm" class="space-y-6">
+                <!-- 학번 입력 -->
+                <div>
+                    <label for="studentId" class="block classroom-font text-2xl mb-2">학번</label>
+                    <input type="text" id="studentId" name="studentId" required 
+                        placeholder="예: 10101"
+                        class="input-field w-full px-4 py-3 rounded-lg text-gray-800 placeholder-gray-400">
+                </div>
+
+                <!-- 이름 입력 -->
+                <div>
+                    <label for="name" class="block classroom-font text-2xl mb-2">이름</label>
+                    <input type="text" id="name" name="name" required 
+                        placeholder="이름을 입력하세요"
+                        class="input-field w-full px-4 py-3 rounded-lg text-gray-800 placeholder-gray-400">
+                </div>
+
+                <!-- 나의 생각 입력 -->
+                <div>
+                    <label for="opinion" class="block classroom-font text-2xl mb-2">나의 생각</label>
+                    <textarea id="opinion" name="opinion" rows="4" required 
+                        placeholder="선생님께 하고 싶은 말을 적어보아요."
+                        class="input-field w-full px-4 py-3 rounded-lg text-gray-800 placeholder-gray-400 resize-none"></textarea>
+                </div>
+
+                <!-- 제출 버튼 -->
+                <button type="submit" id="submitBtn"
+                    class="btn-submit w-full py-4 rounded-xl text-xl font-bold shadow-md classroom-font tracking-widest">
+                    분필로 제출하기!
+                </button>
+            </form>
+        </div>
+        
+        <p class="text-center text-gray-400 text-sm mt-6">© 2024 우리 반 온라인 게시판</p>
+    </div>
+
+    <script>
+        // --- 설정: 구글 앱스 스크립트 웹 앱 URL ---
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzQsszExDhyo2LJlXXmSa0lQ3GlMlMfH2AXsCootHX87efXhleX6ZPp8bozpAifzLpW/exec";
+
+        const form = document.getElementById('studentForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const statusMsg = document.getElementById('statusMessage');
+
+        function showMessage(text, isError = false) {
+            statusMsg.textContent = text;
+            statusMsg.style.display = 'block';
+            statusMsg.className = isError 
+                ? 'bg-red-500 text-white shadow-lg' 
+                : 'bg-green-500 text-white shadow-lg';
+            
+            setTimeout(() => {
+                statusMsg.style.display = 'none';
+            }, 3000);
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // 버튼 비활성화
+            submitBtn.disabled = true;
+            submitBtn.textContent = "전송 중...";
+            submitBtn.style.opacity = "0.7";
+
+            const formData = new FormData(form);
+            
+            try {
+                // fetch와 no-cors 모드를 사용하여 데이터 전송
+                await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: new URLSearchParams(formData)
+                });
+
+                showMessage("성공적으로 제출되었습니다! 🎉");
+                form.reset();
+
+            } catch (error) {
+                console.error('Error!', error.message);
+                showMessage("제출에 실패했습니다. 다시 시도해 주세요.", true);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "분필로 제출하기!";
+                submitBtn.style.opacity = "1";
+            }
+        });
+    </script>
+</body>
+</html>
